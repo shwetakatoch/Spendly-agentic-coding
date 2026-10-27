@@ -22,6 +22,18 @@ def login():
     return render_template("login.html")
 
 
+@app.route("/terms", strict_slashes=False)
+@app.route("/terms-and-conditions", strict_slashes=False)
+def terms():
+    return render_template("terms.html")
+
+
+@app.route("/privacy", strict_slashes=False)
+@app.route("/privacy-policy", strict_slashes=False)
+def privacy():
+    return render_template("privacy.html")
+
+
 # ------------------------------------------------------------------ #
 # Placeholder routes — students will implement these                  #
 # ------------------------------------------------------------------ #

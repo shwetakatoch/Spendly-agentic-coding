@@ -31,11 +31,15 @@
 
     <footer class="footer">
         <div class="footer-inner">
-            <span class="brand-icon">◈</span>
-            <span class="footer-name">Spendly</span>
+            <a href="{{ url_for('landing') }}" class="footer-brand">
+                <span class="brand-icon">◈</span>
+                <span class="footer-name">Spendly</span>
+            </a>
             <p class="footer-copy">Track every rupee. Own your finances.</p>
-            <a href="#">Terms and Conditions</a>
-            <a href="#">Privacy Policy</a>
+            <div class="footer-links">
+                <a href="{{ url_for('terms') }}">Terms and Conditions</a>
+                <a href="{{ url_for('privacy') }}">Privacy Policy</a>
+            </div>
         </div>
     </footer>
 

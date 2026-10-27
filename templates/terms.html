@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Terms and Conditions — Spendly{% endblock %}
+
+{% block content %}
+
+<section class="legal-section">
+    <div class="legal-container">
+
+        <div class="legal-header">
+            <span class="hero-badge">Legal</span>
+            <h1 class="legal-title">Terms and Conditions</h1>
+            <p class="legal-updated">Last updated: October 27, 2026</p>
+        </div>
+
+        <div class="legal-card">
+            <section>
+                <h2>1. Acceptance of Terms</h2>
+                <p>By accessing or using Spendly, you agree to be bound by these Terms and Conditions. If you do not agree, please do not use the service.</p>
+            </section>
+            <section>
+                <h2>2. Your Account</h2>
+                <ul><li>You must provide accurate information when creating an account.</li><li>You are responsible for keeping your password secure.</li><li>You are responsible for all activity that occurs under your account.</li></ul>
+            </section>
+            <section>
+                <h2>3. Acceptable Use</h2>
+                <ul><li>Do not use Spendly for any unlawful purpose.</li><li>Do not attempt to disrupt or gain unauthorized access to the service.</li><li>Do not upload malicious or misleading content.</li></ul>
+            </section>
+            <section>
+                <h2>4. Your Data</h2>
+                <p>You retain ownership of the expense data you enter. You grant Spendly permission to store and process it solely to provide the service to you.</p>
+            </section>
+            <section>
+                <h2>5. Disclaimer</h2>
+                <p>Spendly is a tracking tool and does not provide financial, tax, or legal advice. The service is provided “as is” without warranties of any kind.</p>
+            </section>
+            <section>
+                <h2>6. Limitation of Liability</h2>
+                <p>To the fullest extent permitted by law, Spendly is not liable for any indirect or consequential damages arising from your use of the service.</p>
+            </section>
+            <section>
+                <h2>7. Changes to These Terms</h2>
+                <p>We may update these terms from time to time. Continued use of Spendly after changes means you accept the revised terms.</p>
+            </section>
+            <section>
+                <h2>8. Contact</h2>
+                <p>Questions about these terms? Email us at support@spendly.example.</p>
+            </section>
+        </div>
+
+        <p class="legal-note">
+            This is placeholder text for demonstration purposes. See also our
+            <a href="{{ url_for('privacy') }}">Privacy Policy</a>.
+        </p>
+
+    </div>
+</section>
+
+{% endblock %}
