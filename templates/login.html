@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import password_field %}
 
 {% block title %}Sign in — Spendly{% endblock %}
 
@@ -17,19 +18,15 @@
             <div class="auth-error">{{ error }}</div>
             {% endif %}
 
-            <form method="POST" action="/login">
+            <form method="POST" action="{{ url_for('login') }}">
                 <div class="form-group">
                     <label for="email">Email address</label>
                     <input type="email" id="email" name="email"
                            class="form-input" placeholder="nitish@example.com"
-                           required autofocus>
+                           value="{{ email or '' }}" required autofocus>
                 </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password"
-                           class="form-input" placeholder="Your password"
-                           required>
-                </div>
+                {{ password_field("password", "password", "Password", "Your password", autocomplete="current-password") }}
+                <p class="form-aside"><a href="{{ url_for('forgot_password') }}">Forgot password?</a></p>
                 <button type="submit" class="btn-submit">Sign in</button>
             </form>
         </div>

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Verify your email — Spendly{% endblock %}
+
+{% block content %}
+
+<section class="auth-section">
+    <div class="auth-container">
+
+        <div class="auth-header">
+            <h1 class="auth-title">Check your email</h1>
+            <p class="auth-subtitle">Enter the 6-digit code sent to {{ email }}</p>
+        </div>
+
+        <div class="auth-card">
+            {% if error %}
+            <div class="auth-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('verify_code') }}">
+                <div class="form-group">
+                    <label for="code">Verification code</label>
+                    <input type="text" id="code" name="code"
+                           class="form-input code-input" placeholder="123456"
+                           inputmode="numeric" autocomplete="one-time-code"
+                           pattern="[0-9]{6}" maxlength="6" required autofocus>
+                </div>
+                <button type="submit" class="btn-submit">Verify code</button>
+                <button type="submit" name="action" value="resend" class="btn-secondary" formnovalidate>
+                    Resend code
+                </button>
+            </form>
+        </div>
+
+        <p class="auth-switch">
+            <a href="{{ url_for('forgot_password') }}">Start over</a>
+        </p>
+
+    </div>
+</section>
+
+{% endblock %}

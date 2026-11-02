@@ -25,6 +25,12 @@
         </div>
     </nav>
 
+    <div class="toast-container" id="toast-container" aria-live="polite">
+        {% for category, message in get_flashed_messages(with_categories=true) %}
+        <div class="toast toast-{{ category }}" role="status">{{ message }}</div>
+        {% endfor %}
+    </div>
+
     <main class="main-content">
         {% block content %}{% endblock %}
     </main>

@@ -715,3 +715,91 @@ a { color: inherit; text-decoration: none; }
     .legal-section { padding: 2.5rem 1rem 3rem; }
     .legal-card { padding: 1.5rem; }
 }
+
+/* ---- Auth extras: password field, rules, toasts ---- */
+.password-field { position: relative; }
+
+.password-field .form-input { padding-right: 2.75rem; }
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.6rem;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    padding: 0.25rem;
+    background: none;
+    border: none;
+    color: var(--ink-muted);
+    cursor: pointer;
+}
+
+.password-toggle:hover { color: var(--ink); }
+
+.password-toggle .icon-eye-off { display: none; }
+.password-field.is-visible .icon-eye { display: none; }
+.password-field.is-visible .icon-eye-off { display: block; }
+
+.password-rules {
+    list-style: none;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+}
+
+.password-rules li { padding-left: 1.4rem; position: relative; margin-bottom: 0.2rem; }
+.password-rules li::before { content: "○"; position: absolute; left: 0; }
+.password-rules li.is-met { color: var(--accent); }
+.password-rules li.is-met::before { content: "✓"; }
+
+.form-aside { margin: -0.5rem 0 1.25rem; text-align: right; font-size: 0.9rem; }
+.form-aside a { color: var(--accent); }
+
+.form-hint { margin-top: 1rem; font-size: 0.85rem; color: var(--ink-muted); text-align: center; }
+
+.btn-secondary {
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+.code-input { letter-spacing: 0.4em; text-align: center; font-size: 1.25rem; }
+
+.toast-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: calc(100vw - 2rem);
+}
+
+.toast {
+    padding: 0.85rem 1.1rem;
+    background: var(--paper-card);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--ink-muted);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    font-size: 0.95rem;
+    transition: opacity 0.3s;
+}
+
+.toast-success { border-left-color: var(--accent); }
+.toast-error { border-left-color: var(--danger); }
+.toast-hide { opacity: 0; }
