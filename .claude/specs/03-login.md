@@ -8,9 +8,9 @@ Make the `/login` form work and add a recovery path for users who forgot their p
 - Step 02 — Registration (users exist; shared strength rules, `templates/_macros.html`, toast container in `base.html`, `showToast` in `main.js`).
 
 ## Routes
-- `GET /login` — render the sign-in form with a "Forgot password?" link — public
+- `GET /login` — render the sign-in form with a "Forgot password?" link; a signed-in user is redirected to `/` instead (also for `POST /login`) — public
 - `POST /login` — check email and password; on success start a session and redirect to the homepage (`/`); on failure re-render with "Invalid email or password." — public
-- `GET /logout` — clear the session, flash a message, redirect to `/` — public
+- `GET /logout` — clear the session, flash a message, redirect to `/login` — public (made POST-only in Step 04)
 - `GET /forgot-password` — form asking for email and last known password, with a "Try another way" button — public
 - `POST /forgot-password` — public
   - `method=password`: if the password matches, allow a reset (`session["reset_user_id"]`) and redirect to `/reset-password`; otherwise re-render with an error
@@ -74,7 +74,8 @@ No new dependencies. Code generation uses the standard library `secrets`.
 ## Definition of done
 - [ ] Signing in with a registered email and password redirects to the homepage (`/`) and shows a welcome toast
 - [ ] A wrong password or unknown email shows "Invalid email or password." and no session is created
-- [ ] `/logout` clears the session and returns to the landing page
+- [ ] `/logout` clears the session and returns to the login page
+- [ ] A signed-in user who opens `/login` is redirected to `/`
 - [ ] The login page shows a "Forgot password?" link that opens `/forgot-password`
 - [ ] Entering the correct last known password leads to the new-password form; a wrong one shows an error and `/reset-password` stays blocked
 - [ ] "Try another way" prints a 6-digit code in the server console and opens the code page

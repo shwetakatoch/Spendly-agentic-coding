@@ -7,7 +7,7 @@ Turn the static `/register` page into a working sign-up flow. A visitor submits 
 - Step 01 — Database setup (`users` table, `get_db()`, `init_db()`).
 
 ## Routes
-- `GET /register` — render the empty registration form — public
+- `GET /register` — render the empty registration form; a signed-in user is redirected to `/` instead (also for `POST /register`) — public
 - `POST /register` — validate the form and create the user — public
   - On failure: re-render the form (HTTP 200) with an error message.
   - On success: render the registration page (HTTP 200) with `success_redirect` set. The page shows a success toast and redirects to `/login` after about 2 seconds (JavaScript), with a `<meta http-equiv="refresh">` fallback at 3 seconds.
@@ -70,5 +70,6 @@ No new dependencies. (`pytest` and `pytest-flask` are already installed. Toasts 
 - [ ] After a failed submit the name and email fields keep their values; the password fields are empty
 - [ ] The form action uses `url_for('register')` (no hard-coded `/register` in the template)
 - [ ] The "Sign in" link on the page still goes to `/login`
+- [ ] A signed-in user who opens `/register` is redirected to `/`
 - [ ] `pytest tests/test_registration.py` passes
 - [ ] App starts with `python app.py` without errors

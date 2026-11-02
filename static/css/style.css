@@ -803,3 +803,16 @@ a { color: inherit; text-decoration: none; }
 .toast-success { border-left-color: var(--accent); }
 .toast-error { border-left-color: var(--danger); }
 .toast-hide { opacity: 0; }
+
+/* ---- Navbar: signed-in state ---- */
+.nav-user { color: var(--ink-soft); }
+
+.nav-logout { margin: 0; }
+
+.nav-logout button {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    border: none;
+    cursor: pointer;
+}

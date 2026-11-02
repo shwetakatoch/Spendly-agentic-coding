@@ -58,7 +58,7 @@ def test_login_failure(client, email, password):
 
 def test_logout_clears_session(client):
     login(client)
-    assert client.get("/logout").status_code == 302
+    assert client.post("/logout").status_code == 302
     with client.session_transaction() as s:
         assert "user_id" not in s
 

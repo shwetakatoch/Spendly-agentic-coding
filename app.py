@@ -13,6 +13,7 @@ from database.db import get_db, init_db, seed_db
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-change-me")
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 RESET_CODE_TTL = timedelta(minutes=10)
 RESET_MAX_ATTEMPTS = 5
@@ -43,8 +44,31 @@ def password_error(password, confirm):
     return None
 
 
+def already_signed_in():
+    return session.get("user_id") is not None
+
+
 def find_user(conn, email):
     return conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+
+
+@app.context_processor
+def inject_current_user():
+    """Expose the signed-in user (or None) to every template."""
+    user_id = session.get("user_id")
+    if user_id is None:
+        return {"current_user": None}
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT id, name FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+    if row is None:
+        session.clear()
+        return {"current_user": None}
+    return {"current_user": {"id": row["id"], "name": row["name"]}}
 
 
 # ------------------------------------------------------------------ #
@@ -58,6 +82,8 @@ def landing():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    if already_signed_in():
+        return redirect(url_for("landing"))
     if request.method == "GET":
         return render_template("register.html")
 
@@ -99,6 +125,8 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    if already_signed_in():
+        return redirect(url_for("landing"))
     if request.method == "GET":
         return render_template("login.html")
 
@@ -287,11 +315,11 @@ def privacy():
 # Placeholder routes — students will implement these                  #
 # ------------------------------------------------------------------ #
 
-@app.route("/logout")
+@app.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     flash("You have been signed out.", "info")
-    return redirect(url_for("landing"))
+    return redirect(url_for("login"))
 
 
 @app.route("/profile")
