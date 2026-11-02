@@ -19,11 +19,24 @@
                 <span class="brand-name">Spendly</span>
             </a>
             <div class="nav-links">
+                {% if current_user %}
+                <span class="nav-user">Hello, {{ current_user.name }}</span>
+                <form method="POST" action="{{ url_for('logout') }}" class="nav-logout">
+                    <button type="submit" class="nav-cta">Sign out</button>
+                </form>
+                {% else %}
                 <a href="{{ url_for('login') }}">Sign in</a>
                 <a href="{{ url_for('register') }}" class="nav-cta">Get started</a>
+                {% endif %}
             </div>
         </div>
     </nav>
+
+    <div class="toast-container" id="toast-container" aria-live="polite">
+        {% for category, message in get_flashed_messages(with_categories=true) %}
+        <div class="toast toast-{{ category }}" role="status">{{ message }}</div>
+        {% endfor %}
+    </div>
 
     <main class="main-content">
         {% block content %}{% endblock %}

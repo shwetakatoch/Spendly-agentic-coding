@@ -52,6 +52,13 @@ def init_db():
 
             CREATE INDEX IF NOT EXISTS idx_expenses_user_date
                 ON expenses(user_id, date);
+
+            CREATE TABLE IF NOT EXISTS password_resets (
+                user_id    INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                code_hash  TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                attempts   INTEGER NOT NULL DEFAULT 0
+            );
             """
         )
         conn.commit()
