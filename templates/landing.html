@@ -16,7 +16,9 @@
             on budget — without the spreadsheet headache.
         </p>
         <div class="hero-actions">
+            {% if not current_user %}
             <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
+            {% endif %}
             <button type="button" class="btn-primary" id="how-it-works-btn">See how it works</button>
         </div>
     </div>
@@ -78,6 +80,7 @@
     </div>
 </section>
 
+{% if not current_user %}
 <section class="cta-section">
     <div class="cta-inner">
         <h2 class="cta-title">Ready to take control?</h2>
@@ -85,6 +88,7 @@
         <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
     </div>
 </section>
+{% endif %}
 
 {% endblock %}
 
