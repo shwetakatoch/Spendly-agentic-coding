@@ -2,7 +2,7 @@ import os
 import re
 import secrets
 import sqlite3
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from flask import (
     Flask, flash, redirect, render_template, request, session, url_for,
@@ -324,7 +324,56 @@ def logout():
 
 @app.route("/profile")
 def profile():
-    return "Profile page — coming in Step 4"
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    month = date.today().strftime("%Y-%m")
+    conn = get_db()
+    try:
+        user = conn.execute(
+            "SELECT name, email, created_at FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        totals = conn.execute(
+            "SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS count, "
+            "COALESCE(SUM(CASE WHEN strftime('%Y-%m', date) = ? THEN amount END), 0) "
+            "AS month_total FROM expenses WHERE user_id = ?",
+            (month, user_id),
+        ).fetchone()
+        categories = conn.execute(
+            "SELECT category, SUM(amount) AS total FROM expenses "
+            "WHERE user_id = ? GROUP BY category ORDER BY total DESC",
+            (user_id,),
+        ).fetchall()
+        recent = conn.execute(
+            "SELECT category, description, amount, date FROM expenses "
+            "WHERE user_id = ? ORDER BY date DESC, id DESC LIMIT 5",
+            (user_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    top = categories[0]["total"] if categories else 0
+    category_rows = [
+        {
+            "name": row["category"],
+            "total": row["total"],
+            "percent": round(row["total"] / top * 100) if top else 0,
+        }
+        for row in categories
+    ]
+    member_since = None
+    if user["created_at"]:
+        member_since = datetime.fromisoformat(user["created_at"]).strftime("%B %Y")
+
+    return render_template(
+        "profile.html",
+        user=user,
+        member_since=member_since,
+        totals=totals,
+        categories=category_rows,
+        recent=recent,
+    )
 
 
 @app.route("/expenses/add")
