@@ -71,6 +71,15 @@ def inject_current_user():
     return {"current_user": {"id": row["id"], "name": row["name"]}}
 
 
+@app.after_request
+def no_store(response):
+    """Stop browsers caching pages, so Back after sign-out re-checks the session."""
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
 # ------------------------------------------------------------------ #
 # Routes                                                              #
 # ------------------------------------------------------------------ #
@@ -83,7 +92,7 @@ def landing():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if already_signed_in():
-        return redirect(url_for("landing"))
+        return redirect(url_for("profile"))
     if request.method == "GET":
         return render_template("register.html")
 
@@ -126,7 +135,7 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if already_signed_in():
-        return redirect(url_for("landing"))
+        return redirect(url_for("profile"))
     if request.method == "GET":
         return render_template("login.html")
 
@@ -145,7 +154,7 @@ def login():
     session.clear()
     session["user_id"] = user["id"]
     flash(f"Welcome back, {user['name']}!", "success")
-    return redirect(url_for("landing"))
+    return redirect(url_for("profile"))
 
 
 # ------------------------------------------------------------------ #

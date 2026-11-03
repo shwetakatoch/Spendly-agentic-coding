@@ -77,10 +77,23 @@ def test_deleted_user_clears_session(client):
 def test_signed_in_user_redirected_from_auth_pages(client, path, method):
     sign_in(client)
     r = getattr(client, method)(path, data={"email": "x@example.com", "password": "x"})
-    assert r.status_code == 302 and r.headers["Location"] == "/"
+    assert r.status_code == 302 and r.headers["Location"].endswith("/profile")
 
 
 def test_session_cookie_flags(client):
     r = sign_in(client)
     cookie = r.headers["Set-Cookie"]
     assert "HttpOnly" in cookie and "SameSite=Lax" in cookie
+
+
+def test_pages_are_not_cached(client):
+    sign_in(client)
+    for path in ("/", "/profile"):
+        assert "no-store" in client.get(path).headers["Cache-Control"]
+
+
+def test_profile_after_logout_redirects_to_login(client):
+    sign_in(client)
+    client.post("/logout")
+    r = client.get("/profile")
+    assert r.status_code == 302 and r.headers["Location"].endswith("/login")

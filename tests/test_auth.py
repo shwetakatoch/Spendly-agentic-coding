@@ -40,7 +40,7 @@ def login(client, password=PW, email="asha@example.com"):
 def test_login_success_sets_session(client):
     r = login(client)
     assert r.status_code == 302
-    assert r.headers["Location"] == "/"
+    assert r.headers["Location"].endswith("/profile")
     with client.session_transaction() as s:
         assert s["user_id"] == 1
 

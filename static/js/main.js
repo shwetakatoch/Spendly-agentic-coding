@@ -86,3 +86,10 @@ document.querySelectorAll("[data-password-form]").forEach(function (form) {
         }
     });
 });
+
+// ---- Back/forward cache -----------------------------------------------
+// A page restored from the browser's back/forward cache skips the server, so
+// reload it to re-check the session (e.g. Back to /profile after signing out).
+window.addEventListener("pageshow", function (event) {
+    if (event.persisted) window.location.reload();
+});
