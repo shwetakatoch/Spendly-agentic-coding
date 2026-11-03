@@ -21,6 +21,7 @@
             <div class="nav-links">
                 {% if current_user %}
                 <span class="nav-user">Hello, {{ current_user.name }}</span>
+                <a href="{{ url_for('profile') }}">Profile</a>
                 <form method="POST" action="{{ url_for('logout') }}" class="nav-logout">
                     <button type="submit" class="nav-cta">Sign out</button>
                 </form>

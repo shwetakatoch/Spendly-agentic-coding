@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — Spendly{% endblock %}
+
+{% block content %}
+
+<section class="profile-section">
+    <div class="profile-inner">
+
+        <div class="profile-card profile-header">
+            <div class="profile-avatar" aria-hidden="true">{{ user.name[:1]|upper }}</div>
+            <div>
+                <h1 class="profile-name">{{ user.name }}</h1>
+                <p class="profile-email">{{ user.email }}</p>
+                {% if member_since %}
+                <p class="profile-since">Member since {{ member_since }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="profile-stats">
+            <div class="profile-card">
+                <span class="profile-stat-label">Total spent</span>
+                <span class="profile-stat-value">₹{{ "{:,.2f}".format(totals.total) }}</span>
+            </div>
+            <div class="profile-card">
+                <span class="profile-stat-label">This month</span>
+                <span class="profile-stat-value">₹{{ "{:,.2f}".format(totals.month_total) }}</span>
+            </div>
+            <div class="profile-card">
+                <span class="profile-stat-label">Expenses logged</span>
+                <span class="profile-stat-value">{{ totals.count }}</span>
+            </div>
+        </div>
+
+        <div class="profile-card">
+            <h2 class="profile-heading">Spending by category</h2>
+            {% if categories %}
+            {% for cat in categories %}
+            <div class="profile-bar-row">
+                <span class="profile-bar-name">{{ cat.name }}</span>
+                <div class="profile-track">
+                    <div class="profile-bar" style="width: {{ cat.percent }}%"></div>
+                </div>
+                <span class="profile-bar-amount">₹{{ "{:,.0f}".format(cat.total) }}</span>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="profile-empty">No expenses yet. Once you add some, your spending breakdown shows up here.</p>
+            {% endif %}
+        </div>
+
+        <div class="profile-card">
+            <h2 class="profile-heading">Recent expenses</h2>
+            {% if recent %}
+            <ul class="profile-list">
+                {% for e in recent %}
+                <li>
+                    <span class="profile-expense-title">{{ e.description or e.category }}</span>
+                    <span class="profile-expense-amount">₹{{ "{:,.2f}".format(e.amount) }}</span>
+                    <span class="profile-expense-meta">{{ e.category }} · {{ e.date }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="profile-empty">Nothing here yet.</p>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}
