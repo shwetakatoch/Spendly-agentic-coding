@@ -18,14 +18,39 @@
             </div>
         </div>
 
+        <div class="profile-card profile-filter">
+            <div class="profile-filter-presets">
+                {% for key, label in presets %}
+                <a class="profile-chip{% if key == active_preset %} is-active{% endif %}"
+                   href="{{ url_for('profile', preset=key) }}"
+                   {% if key == active_preset %}aria-current="page"{% endif %}>{{ label }}</a>
+                {% endfor %}
+            </div>
+            <form class="profile-filter-form" method="get" action="{{ url_for('profile') }}">
+                <label>From
+                    <input type="date" name="start" value="{{ custom_start }}">
+                </label>
+                <label>To
+                    <input type="date" name="end" value="{{ custom_end }}">
+                </label>
+                <button type="submit" class="profile-chip is-active">Apply</button>
+                {% if not is_default %}
+                <a class="profile-chip" href="{{ url_for('profile') }}">Reset</a>
+                {% endif %}
+            </form>
+            {% if filter_error %}
+            <p class="profile-filter-error" role="alert">{{ filter_error }}</p>
+            {% endif %}
+        </div>
+
         <div class="profile-stats">
             <div class="profile-card">
-                <span class="profile-stat-label">Total spent</span>
+                <span class="profile-stat-label">Spent in period</span>
                 <span class="profile-stat-value">₹{{ "{:,.2f}".format(totals.total) }}</span>
             </div>
             <div class="profile-card">
-                <span class="profile-stat-label">This month</span>
-                <span class="profile-stat-value">₹{{ "{:,.2f}".format(totals.month_total) }}</span>
+                <span class="profile-stat-label">Period</span>
+                <span class="profile-stat-value profile-stat-range">{{ range_label }}</span>
             </div>
             <div class="profile-card">
                 <span class="profile-stat-label">Expenses logged</span>
@@ -46,7 +71,7 @@
             </div>
             {% endfor %}
             {% else %}
-            <p class="profile-empty">No expenses yet. Once you add some, your spending breakdown shows up here.</p>
+            <p class="profile-empty">No expenses in this period.</p>
             {% endif %}
         </div>
 
@@ -63,7 +88,7 @@
                 {% endfor %}
             </ul>
             {% else %}
-            <p class="profile-empty">Nothing here yet.</p>
+            <p class="profile-empty">No expenses in this period.</p>
             {% endif %}
         </div>
 

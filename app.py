@@ -2,6 +2,7 @@ import os
 import re
 import secrets
 import sqlite3
+from collections import namedtuple
 from datetime import date, datetime, timedelta, timezone
 
 from flask import (
@@ -331,33 +332,131 @@ def logout():
     return redirect(url_for("login"))
 
 
+PROFILE_PRESETS = [
+    ("last_month", "Last month"),
+    ("month", "This month"),
+    ("30d", "Last 30 days"),
+    ("year", "This year"),
+    ("all", "All time"),
+]
+
+
+PRESET_KEYS = {key for key, _ in PROFILE_PRESETS}
+
+# start/end are ISO strings (or None); is_custom means start/end came from the
+# user's own dates; is_default means the untouched last-month view.
+RangeResult = namedtuple(
+    "RangeResult", "start end preset error is_custom is_default"
+)
+
+
+def preset_range(preset, today):
+    """Return (start, end) dates for a preset; either may be None."""
+    if preset == "month":
+        return today.replace(day=1), today
+    if preset == "30d":
+        return today - timedelta(days=29), today
+    if preset == "year":
+        return today.replace(month=1, day=1), today
+    if preset == "all":
+        return None, None
+    # "last_month": the whole calendar month before today's month.
+    last_day = today.replace(day=1) - timedelta(days=1)
+    return last_day.replace(day=1), last_day
+
+
+def _iso(d):
+    return d.isoformat() if d else None
+
+
+def _parse_custom_range(raw_start, raw_end):
+    """Parse user-supplied dates. Returns (start, end, error)."""
+    try:
+        start = date.fromisoformat(raw_start) if raw_start else None
+        end = date.fromisoformat(raw_end) if raw_end else None
+    except ValueError:
+        return None, None, "Enter dates as YYYY-MM-DD."
+    if start and end and start > end:
+        return None, None, "Start date must be on or before end date."
+    return start, end, None
+
+
+def resolve_range(args, today):
+    """Work out the profile date filter from query args.
+
+    Defaults to last month. Custom start/end win over preset; bad input
+    falls back to last month along with an error message.
+    """
+    preset = args.get("preset", "last_month")
+    if preset not in PRESET_KEYS:
+        preset = "last_month"
+
+    raw_start = args.get("start", "").strip()
+    raw_end = args.get("end", "").strip()
+    if raw_start or raw_end:
+        start, end, error = _parse_custom_range(raw_start, raw_end)
+        if error:
+            start, end = preset_range("last_month", today)
+            return RangeResult(_iso(start), _iso(end), "last_month", error, False, False)
+        return RangeResult(_iso(start), _iso(end), None, None, True, False)
+
+    start, end = preset_range(preset, today)
+    return RangeResult(_iso(start), _iso(end), preset, None, False, preset == "last_month")
+
+
+def range_label(start, end):
+    """Human-readable range, e.g. "1 Oct 2026 – 31 Oct 2026"."""
+    def fmt(iso):
+        # Built by hand because %d would zero-pad the day.
+        d = date.fromisoformat(iso)
+        return f"{d.day} {d.strftime('%b %Y')}"
+    if start and end:
+        return f"{fmt(start)} – {fmt(end)}"
+    if start:
+        return f"From {fmt(start)}"
+    if end:
+        return f"Up to {fmt(end)}"
+    return "All time"
+
+
 @app.route("/profile")
 def profile():
     user_id = session.get("user_id")
     if not user_id:
         return redirect(url_for("login"))
 
-    month = date.today().strftime("%Y-%m")
+    rng = resolve_range(request.args, date.today())
+    start, end = rng.start, rng.end
+    # Only literal SQL fragments may be appended to `where`; every value goes
+    # through `params` as a "?" placeholder. Never interpolate user input here.
+    where = "user_id = ?"
+    params = [user_id]
+    if start:
+        where += " AND date >= ?"
+        params.append(start)
+    if end:
+        where += " AND date <= ?"
+        params.append(end)
+
     conn = get_db()
     try:
         user = conn.execute(
             "SELECT name, email, created_at FROM users WHERE id = ?", (user_id,)
         ).fetchone()
         totals = conn.execute(
-            "SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS count, "
-            "COALESCE(SUM(CASE WHEN strftime('%Y-%m', date) = ? THEN amount END), 0) "
-            "AS month_total FROM expenses WHERE user_id = ?",
-            (month, user_id),
+            "SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS count "
+            "FROM expenses WHERE " + where,
+            params,
         ).fetchone()
         categories = conn.execute(
             "SELECT category, SUM(amount) AS total FROM expenses "
-            "WHERE user_id = ? GROUP BY category ORDER BY total DESC",
-            (user_id,),
+            "WHERE " + where + " GROUP BY category ORDER BY total DESC",
+            params,
         ).fetchall()
         recent = conn.execute(
             "SELECT category, description, amount, date FROM expenses "
-            "WHERE user_id = ? ORDER BY date DESC, id DESC LIMIT 5",
-            (user_id,),
+            "WHERE " + where + " ORDER BY date DESC, id DESC LIMIT 5",
+            params,
         ).fetchall()
     finally:
         conn.close()
@@ -382,6 +481,13 @@ def profile():
         totals=totals,
         categories=category_rows,
         recent=recent,
+        range_label=range_label(start, end),
+        active_preset=rng.preset,
+        custom_start=start if rng.is_custom else "",
+        custom_end=end if rng.is_custom else "",
+        filter_error=rng.error,
+        is_default=rng.is_default,
+        presets=PROFILE_PRESETS,
     )
 
 
