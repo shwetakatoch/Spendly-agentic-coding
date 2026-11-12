@@ -76,7 +76,10 @@
         </div>
 
         <div class="profile-card">
-            <h2 class="profile-heading">Recent expenses</h2>
+            <div class="profile-heading-row">
+                <h2 class="profile-heading">Recent expenses</h2>
+                <a href="{{ url_for('add_expense') }}" class="btn-primary">Add expense</a>
+            </div>
             {% if recent %}
             <ul class="profile-list">
                 {% for e in recent %}
