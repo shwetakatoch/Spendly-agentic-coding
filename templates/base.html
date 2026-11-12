@@ -23,7 +23,9 @@
                 <span class="nav-user">Hello, {{ current_user.name }}</span>
                 <a href="{{ url_for('profile') }}"{% if request.endpoint == 'profile' %} class="active" aria-current="page"{% endif %}>Profile</a>
                 <a href="{{ url_for('analytics') }}"{% if request.endpoint == 'analytics' %} class="active" aria-current="page"{% endif %}>Analytics</a>
+                <a href="{{ url_for('add_expense') }}"{% if request.endpoint == 'add_expense' %} class="active" aria-current="page"{% endif %}>Add expense</a>
                 <form method="POST" action="{{ url_for('logout') }}" class="nav-logout">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="nav-cta">Sign out</button>
                 </form>
                 {% else %}

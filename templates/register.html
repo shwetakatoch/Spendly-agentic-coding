@@ -23,6 +23,7 @@
             <div class="auth-error" data-form-error {% if not error %}hidden{% endif %}>{{ error }}</div>
 
             <form method="POST" action="{{ url_for('register') }}" data-password-form novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-group">
                     <label for="name">Full name</label>
                     <input type="text" id="name" name="name"

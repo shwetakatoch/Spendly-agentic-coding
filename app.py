@@ -1,16 +1,18 @@
+import math
 import os
 import re
 import secrets
 import sqlite3
 from collections import namedtuple
 from datetime import date, datetime, timedelta, timezone
+from functools import wraps
 
 from flask import (
-    Flask, flash, redirect, render_template, request, session, url_for,
+    Flask, abort, flash, redirect, render_template, request, session, url_for,
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from database.db import get_db, init_db, seed_db
+from database.db import CATEGORIES, get_db, init_db, seed_db
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-change-me")
@@ -18,6 +20,8 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 RESET_CODE_TTL = timedelta(minutes=10)
 RESET_MAX_ATTEMPTS = 5
+MAX_DESCRIPTION_LENGTH = 200
+MAX_AMOUNT = 10_000_000
 
 with app.app_context():
     init_db()
@@ -47,6 +51,40 @@ def password_error(password, confirm):
 
 def already_signed_in():
     return session.get("user_id") is not None
+
+
+def login_required(view):
+    """Redirect to the login page unless a user is signed in."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not already_signed_in():
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def csrf_token():
+    """Return this session's CSRF token, creating it on first use."""
+    if "csrf_token" not in session:
+        session["csrf_token"] = secrets.token_hex(16)
+    return session["csrf_token"]
+
+
+@app.context_processor
+def inject_csrf_token():
+    return {"csrf_token": csrf_token}
+
+
+@app.before_request
+def check_csrf():
+    """Reject POSTs whose form token doesn't match the session's token."""
+    # Skipped under TESTING so existing tests can post bare forms.
+    if request.method != "POST" or app.config.get("TESTING"):
+        return
+    sent = request.form.get("csrf_token", "").encode()
+    expected = session.get("csrf_token", "").encode()
+    if not expected or not secrets.compare_digest(sent, expected):
+        abort(400)
 
 
 def find_user(conn, email):
@@ -420,10 +458,9 @@ def range_label(start, end):
 
 
 @app.route("/profile")
+@login_required
 def profile():
-    user_id = session.get("user_id")
-    if not user_id:
-        return redirect(url_for("login"))
+    user_id = session["user_id"]
 
     rng = resolve_range(request.args, date.today())
     start, end = rng.start, rng.end
@@ -492,15 +529,93 @@ def profile():
 
 
 @app.route("/analytics")
+@login_required
 def analytics():
-    if not session.get("user_id"):
-        return redirect(url_for("login"))
     return render_template("analytics.html")
 
 
-@app.route("/expenses/add")
+def validate_expense(form, today):
+    """Check the add-expense form.
+
+    Returns (clean_values, None) on success or (None, error_message) on failure.
+    """
+    raw_amount = form.get("amount", "").strip()
+    category = form.get("category", "")
+    raw_date = form.get("date", "").strip()
+    description = form.get("description", "").strip()
+
+    try:
+        amount = round(float(raw_amount), 2)
+    except ValueError:
+        return None, "Enter the amount as a number."
+    if not math.isfinite(amount) or amount < 0.01:
+        return None, "Amount must be at least 0.01."
+    if amount > MAX_AMOUNT:
+        return None, f"Amount can't be more than {MAX_AMOUNT:,}."
+
+    if category not in CATEGORIES:
+        return None, "Please choose a category from the list."
+
+    try:
+        expense_date = date.fromisoformat(raw_date)
+    except ValueError:
+        return None, "Enter the date as YYYY-MM-DD."
+    if expense_date > today:
+        return None, "Date can't be in the future."
+
+    if len(description) > MAX_DESCRIPTION_LENGTH:
+        return None, f"Description must be {MAX_DESCRIPTION_LENGTH} characters or fewer."
+
+    return {
+        "amount": amount,
+        "category": category,
+        "date": expense_date.isoformat(),
+        "description": description or None,
+    }, None
+
+
+@app.route("/expenses/add", methods=["GET", "POST"])
+@login_required
 def add_expense():
-    return "Add expense — coming in Step 7"
+    user_id = session["user_id"]
+    today = date.today()
+    form_context = {
+        "categories": CATEGORIES,
+        "today": today.isoformat(),
+        "max_description": MAX_DESCRIPTION_LENGTH,
+    }
+
+    if request.method == "GET":
+        return render_template(
+            "add_expense.html", values={"date": today.isoformat()}, error=None,
+            **form_context,
+        )
+
+    clean, error = validate_expense(request.form, today)
+    if error:
+        return render_template(
+            "add_expense.html", values=request.form, error=error, **form_context
+        )
+
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT INTO expenses (user_id, amount, category, description, date) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (user_id, clean["amount"], clean["category"],
+             clean["description"], clean["date"]),
+        )
+        conn.commit()
+    except sqlite3.IntegrityError:
+        # The account was deleted while this session was still open.
+        session.clear()
+        flash("Your session has expired. Please sign in again.", "error")
+        return redirect(url_for("login"))
+    finally:
+        conn.close()
+
+    flash("Expense added.", "success")
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/<int:id>/edit")
