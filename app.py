@@ -491,7 +491,7 @@ def profile():
             params,
         ).fetchall()
         recent = conn.execute(
-            "SELECT category, description, amount, date FROM expenses "
+            "SELECT id, category, description, amount, date FROM expenses "
             "WHERE " + where + " ORDER BY date DESC, id DESC LIMIT 5",
             params,
         ).fetchall()
@@ -574,16 +574,36 @@ def validate_expense(form, today):
     }, None
 
 
+EXPENSE_FORM_TEXT = {
+    "add": ("Add expense", "Record what you spent", "Add expense"),
+    "edit": ("Edit expense", "Update the details", "Save changes"),
+}
+
+
+def expense_form_context(mode, today, action_url):
+    """Template variables shared by the add and edit expense forms.
+
+    The template reads `values` with .get(), so it can be a plain dict (GET)
+    or request.form (re-render after an error).
+    """
+    title, subtitle, submit = EXPENSE_FORM_TEXT[mode]
+    return {
+        "categories": CATEGORIES,
+        "today": today.isoformat(),
+        "max_description": MAX_DESCRIPTION_LENGTH,
+        "form_title": title,
+        "form_subtitle": subtitle,
+        "submit_label": submit,
+        "action_url": action_url,
+    }
+
+
 @app.route("/expenses/add", methods=["GET", "POST"])
 @login_required
 def add_expense():
     user_id = session["user_id"]
     today = date.today()
-    form_context = {
-        "categories": CATEGORIES,
-        "today": today.isoformat(),
-        "max_description": MAX_DESCRIPTION_LENGTH,
-    }
+    form_context = expense_form_context("add", today, url_for("add_expense"))
 
     if request.method == "GET":
         return render_template(
@@ -618,9 +638,67 @@ def add_expense():
     return redirect(url_for("profile"))
 
 
-@app.route("/expenses/<int:id>/edit")
+@app.route("/expenses/<int:id>/edit", methods=["GET", "POST"])
+@login_required
 def edit_expense(id):
-    return "Edit expense — coming in Step 8"
+    user_id = session["user_id"]
+    today = date.today()
+    form_context = expense_form_context(
+        "edit", today, url_for("edit_expense", id=id)
+    )
+
+    conn = get_db()
+    try:
+        # Scoping by user_id makes other users' expenses look nonexistent.
+        row = conn.execute(
+            "SELECT amount, category, description, date FROM expenses "
+            "WHERE id = ? AND user_id = ?",
+            (id, user_id),
+        ).fetchone()
+    finally:
+        conn.close()
+    if row is None:
+        abort(404)
+
+    if request.method == "GET":
+        values = {
+            "amount": row["amount"],
+            "category": row["category"],
+            "date": row["date"],
+            "description": row["description"] or "",
+        }
+        return render_template(
+            "add_expense.html", values=values, error=None, **form_context
+        )
+
+    clean, error = validate_expense(request.form, today)
+    if error:
+        return render_template(
+            "add_expense.html", values=request.form, error=error, **form_context
+        )
+
+    # No IntegrityError handling here (unlike add): the UPDATE never changes
+    # user_id, so it can't break the foreign key.
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE expenses SET amount = ?, category = ?, description = ?, "
+            "date = ? WHERE id = ? AND user_id = ?",
+            (
+                clean["amount"],
+                clean["category"],
+                clean["description"],
+                clean["date"],
+                id,
+                user_id,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    flash("Expense updated.", "success")
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/<int:id>/delete")

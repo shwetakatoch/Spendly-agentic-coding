@@ -87,6 +87,7 @@
                     <span class="profile-expense-title">{{ e.description or e.category }}</span>
                     <span class="profile-expense-amount">₹{{ "{:,.2f}".format(e.amount) }}</span>
                     <span class="profile-expense-meta">{{ e.category }} · {{ e.date }}</span>
+                    <a href="{{ url_for('edit_expense', id=e['id']) }}" class="profile-expense-edit">Edit</a>
                 </li>
                 {% endfor %}
             </ul>

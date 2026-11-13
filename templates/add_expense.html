@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Add expense — Spendly{% endblock %}
+{% block title %}{{ form_title }} — Spendly{% endblock %}
 
 {% block content %}
 
@@ -8,8 +8,8 @@
     <div class="auth-container">
 
         <div class="auth-header">
-            <h1 class="auth-title">Add expense</h1>
-            <p class="auth-subtitle">Record what you spent</p>
+            <h1 class="auth-title">{{ form_title }}</h1>
+            <p class="auth-subtitle">{{ form_subtitle }}</p>
         </div>
 
         <div class="auth-card">
@@ -17,7 +17,7 @@
             <div class="auth-error" role="alert">{{ error }}</div>
             {% endif %}
 
-            <form method="POST" action="{{ url_for('add_expense') }}">
+            <form method="POST" action="{{ action_url }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-group">
                     <label for="amount">Amount (₹)</label>
@@ -45,7 +45,7 @@
                            maxlength="{{ max_description }}" placeholder="e.g. Lunch with team"
                            value="{{ values.get('description', '') }}">
                 </div>
-                <button type="submit" class="btn-submit">Add expense</button>
+                <button type="submit" class="btn-submit">{{ submit_label }}</button>
             </form>
         </div>
 
