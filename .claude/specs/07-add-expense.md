@@ -22,7 +22,7 @@ No database changes. The existing `expenses` table (`user_id`, `amount REAL NOT 
 - **Create:** `templates/add_expense.html` — extends `base.html`; form with:
   - Amount (`type="number"`, `step="0.01"`, `min="0.01"`, required)
   - Category (`<select>` populated from `CATEGORIES`, required)
-  - Date (`type="date"`, required, defaults to today, `max` = today)
+  - Date (`type="date"`, required, defaults to today, `max` = today) 
   - Description (text, optional, max 200 chars)
   - Submit button and a Cancel link back to `url_for('profile')`
   - Inline error message area; on error, re-render with the user's previously entered values
