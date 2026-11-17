@@ -88,6 +88,13 @@
                     <span class="profile-expense-amount">₹{{ "{:,.2f}".format(e.amount) }}</span>
                     <span class="profile-expense-meta">{{ e.category }} · {{ e.date }}</span>
                     <a href="{{ url_for('edit_expense', id=e['id']) }}" class="profile-expense-edit">Edit</a>
+                    <form method="POST" action="{{ url_for('delete_expense', id=e['id']) }}"
+                          class="profile-expense-delete-form"
+                          data-confirm-delete
+                          data-confirm-label="{{ e.description or e.category }} · ₹{{ '{:,.2f}'.format(e.amount) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="profile-expense-delete">Delete</button>
+                    </form>
                 </li>
                 {% endfor %}
             </ul>
@@ -99,4 +106,66 @@
     </div>
 </section>
 
+<div class="modal" id="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title" hidden>
+    <div class="confirm-card">
+        <h2 class="confirm-title" id="delete-modal-title">Delete this expense?</h2>
+        <p class="confirm-text" id="delete-modal-text"></p>
+        <p class="confirm-note">This can't be undone.</p>
+        <div class="confirm-actions">
+            <button type="button" class="confirm-cancel" id="delete-modal-cancel">Cancel</button>
+            <button type="button" class="confirm-delete" id="delete-modal-confirm">Delete</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var modal = document.getElementById("delete-modal");
+    var text = document.getElementById("delete-modal-text");
+    var cancelBtn = document.getElementById("delete-modal-cancel");
+    var confirmBtn = document.getElementById("delete-modal-confirm");
+    var pendingForm = null;
+    var opener = null;
+
+    function openModal(form) {
+        pendingForm = form;
+        opener = document.activeElement;
+        text.textContent = form.dataset.confirmLabel;
+        modal.hidden = false;
+        modal.classList.add("is-open");
+        cancelBtn.focus();
+    }
+
+    function closeModal() {
+        modal.classList.remove("is-open");
+        modal.hidden = true;
+        pendingForm = null;
+        if (opener) opener.focus();
+    }
+
+    document.querySelectorAll("[data-confirm-delete]").forEach(function (form) {
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            openModal(form);
+        });
+    });
+
+    confirmBtn.addEventListener("click", function () {
+        var form = pendingForm;
+        if (!form) return;
+        confirmBtn.disabled = true;
+        form.submit();
+    });
+    cancelBtn.addEventListener("click", closeModal);
+    modal.addEventListener("click", function (event) {
+        if (event.target === modal) closeModal();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && pendingForm) closeModal();
+    });
+})();
+</script>
 {% endblock %}
